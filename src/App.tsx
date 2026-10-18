@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Camera, Check, ChevronLeft, ChevronRight, Download, FileText, ImagePlus,
-  Laptop, LoaderCircle, MoreHorizontal, Plus, RotateCw, ScanLine, Search,
-  Share, Smartphone, Sparkles, Trash2, Type, X
+  Camera, Check, ChevronLeft, ChevronRight, Combine, Download, FileSpreadsheet,
+  FileText, FileType2, ImagePlus, Images, Laptop, LoaderCircle, MoreHorizontal,
+  Plus, Presentation, RotateCw, ScanLine, Scissors, Search, Share, Smartphone,
+  Sparkles, Trash2, Type, Wrench, X
 } from 'lucide-react'
 import type { ScanDocument, ScanFilter, ScanPage } from './types'
 import { deleteDocument, listDocuments, saveDocument } from './lib/db'
 import { applyFilter, preparePage, rotatePage } from './lib/image'
 
 const newTitle = () => `扫描文档 ${new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date())}`
+
+type ToolId = 'merge-pdf' | 'split-pdf' | 'pdf-images' | 'pdf-word' | 'pdf-excel' | 'ppt-word'
 
 export default function App() {
   const [documents, setDocuments] = useState<ScanDocument[]>([])
@@ -19,8 +22,13 @@ export default function App() {
   const [ocrProgress, setOcrProgress] = useState<number | null>(null)
   const [textOpen, setTextOpen] = useState(false)
   const [installOpen, setInstallOpen] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
+  const [pendingTool, setPendingTool] = useState<ToolId | null>(null)
+  const [toolAccept, setToolAccept] = useState('.pdf,application/pdf')
+  const [toolMultiple, setToolMultiple] = useState(false)
   const cameraInput = useRef<HTMLInputElement>(null)
   const libraryInput = useRef<HTMLInputElement>(null)
+  const toolInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     listDocuments().then(setDocuments).finally(() => setBusy(null))
@@ -130,10 +138,83 @@ export default function App() {
     finally { setBusy(null) }
   }
 
+  async function exportWord() {
+    if (!selected) return
+    setBusy('正在生成 Word…')
+    try {
+      const { scanToWord } = await import('./lib/fileTools')
+      await scanToWord(selected)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Word 导出失败')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function runAllOcr() {
+    if (!selected) return
+    setOcrProgress(0)
+    try {
+      const { recognizeText } = await import('./lib/ocr')
+      const pages = [...selected.pages]
+      for (let index = 0; index < pages.length; index++) {
+        if (!pages[index].ocrText.trim()) {
+          const ocrText = await recognizeText(pages[index].dataUrl, progress => setOcrProgress((index + progress) / pages.length))
+          pages[index] = { ...pages[index], ocrText }
+        }
+        setOcrProgress((index + 1) / pages.length)
+      }
+      await persist({ ...selected, pages })
+      alert('全文识别已完成，现在可以导出可编辑 Word。')
+    } catch (error) {
+      alert(`全文识别失败：${error instanceof Error ? error.message : '未知错误'}`)
+    } finally {
+      setOcrProgress(null)
+    }
+  }
+
+  function chooseTool(tool: ToolId, accept = '.pdf,application/pdf', multiple = false) {
+    setPendingTool(tool)
+    setToolAccept(accept)
+    setToolMultiple(multiple)
+    requestAnimationFrame(() => toolInput.current?.click())
+  }
+
+  async function handleToolFiles(files: FileList | null) {
+    if (!files?.length || !pendingTool) return
+    const selectedFiles = Array.from(files)
+    const labels: Record<ToolId, string> = {
+      'merge-pdf': '正在合并 PDF…',
+      'split-pdf': '正在拆分 PDF…',
+      'pdf-images': '正在转换 PDF 页面…',
+      'pdf-word': '正在提取 PDF 文字…',
+      'pdf-excel': '正在识别 PDF 表格…',
+      'ppt-word': '正在提取 PPT 内容…'
+    }
+    setBusy(labels[pendingTool])
+    try {
+      const tools = await import('./lib/fileTools')
+      const updateProgress = (label: string) => setBusy(label)
+      if (pendingTool === 'merge-pdf') await tools.mergePdfs(selectedFiles)
+      if (pendingTool === 'split-pdf') await tools.splitPdf(selectedFiles[0])
+      if (pendingTool === 'pdf-images') await tools.pdfToImages(selectedFiles[0], updateProgress)
+      if (pendingTool === 'pdf-word') await tools.pdfToWord(selectedFiles[0], updateProgress)
+      if (pendingTool === 'pdf-excel') await tools.pdfToExcel(selectedFiles[0], updateProgress)
+      if (pendingTool === 'ppt-word') await tools.pptToWord(selectedFiles[0], updateProgress)
+    } catch (error) {
+      alert(`转换失败：${error instanceof Error ? error.message : '未知错误'}`)
+    } finally {
+      setBusy(null)
+      setPendingTool(null)
+      if (toolInput.current) toolInput.current.value = ''
+    }
+  }
+
   return (
     <div className="app-shell">
       <input ref={cameraInput} className="hidden-input" type="file" accept="image/*" capture="environment" multiple onChange={event => importFiles(event.target.files)} />
       <input ref={libraryInput} className="hidden-input" type="file" accept="image/*" multiple onChange={event => importFiles(event.target.files)} />
+      <input ref={toolInput} className="hidden-input" type="file" accept={toolAccept} multiple={toolMultiple} onChange={event => handleToolFiles(event.target.files)} />
 
       <header className="topbar">
         <button className="brand" onClick={() => setSelectedId(null)} aria-label="返回文档列表">
@@ -141,6 +222,7 @@ export default function App() {
           <span><b>文镜</b><small>本地智能扫描</small></span>
         </button>
         <div className="topbar-actions">
+          <button className="install-button" onClick={() => setToolsOpen(true)}><Wrench size={15} /> 文档工具箱</button>
           <button className="install-button" onClick={() => setInstallOpen(true)}><Download size={15} /> 安装到设备</button>
           <div className="privacy-chip"><span /> 仅存此设备</div>
         </div>
@@ -184,6 +266,8 @@ export default function App() {
                 <button onClick={() => updatePage(rotatePage)}><RotateCw />旋转</button>
                 <button onClick={runOcr}><Type />识别文字</button>
                 <button onClick={() => libraryInput.current?.click()}><ImagePlus />添加页面</button>
+                <button onClick={runAllOcr}><Sparkles />全文 OCR</button>
+                <button onClick={exportWord}><FileType2 />导出 Word</button>
                 <button className="danger" onClick={removePage}><Trash2 />删除本页</button>
               </div>
               <div className="local-note"><b>隐私说明</b><br />图片处理与 PDF 生成均在本机完成。首次 OCR 需要下载中英文识别模型。</div>
@@ -264,6 +348,25 @@ export default function App() {
             </div>
             <div className="sync-warning"><b>关于跨设备数据</b><br />当前版本在每台设备上独立保存文档，不会上传或自动同步。使用相同网址不等于共享文档库。</div>
             <footer><button className="primary" onClick={() => setInstallOpen(false)}>知道了</button></footer>
+          </section>
+        </div>
+      )}
+      {toolsOpen && (
+        <div className="modal-backdrop" onClick={() => setToolsOpen(false)}>
+          <section className="tools-modal" onClick={event => event.stopPropagation()}>
+            <header>
+              <div><p className="eyebrow">LOCAL DOCUMENT TOOLS</p><h2>文档工具箱</h2><p>文件只在当前设备内处理，不会上传。</p></div>
+              <button className="icon-button" onClick={() => setToolsOpen(false)}><X /></button>
+            </header>
+            <div className="toolkit-grid">
+              <button onClick={() => chooseTool('merge-pdf', '.pdf,application/pdf', true)}><span><Combine /></span><b>合并 PDF</b><small>按选择顺序合成一份文档</small></button>
+              <button onClick={() => chooseTool('split-pdf')}><span><Scissors /></span><b>拆分 PDF</b><small>每页生成一个 PDF 压缩包</small></button>
+              <button onClick={() => chooseTool('pdf-images')}><span><Images /></span><b>PDF 转图片</b><small>高清 JPG 页面压缩包</small></button>
+              <button onClick={() => chooseTool('pdf-word')}><span><FileType2 /></span><b>PDF 转 Word</b><small>提取可编辑文字与分页</small></button>
+              <button onClick={() => chooseTool('pdf-excel')}><span><FileSpreadsheet /></span><b>PDF 转 Excel</b><small>按页面和视觉间距识别行列</small></button>
+              <button onClick={() => chooseTool('ppt-word', '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation')}><span><Presentation /></span><b>PPT 转 Word</b><small>提取每张幻灯片的文字</small></button>
+            </div>
+            <div className="quality-note"><b>转换说明</b><br />电子版 PDF 可直接提取文字和表格；纯扫描 PDF 没有文字层，建议先转为图片并使用文镜 OCR。受密码保护的文件需要先解锁。PPT 暂支持 `.pptx`。</div>
           </section>
         </div>
       )}
