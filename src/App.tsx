@@ -228,6 +228,11 @@ export default function App() {
         </div>
       </header>
 
+      <nav className="mobile-actions" aria-label="手机快捷操作">
+        <button onClick={() => setToolsOpen(true)}><Wrench size={19} /><span>文档工具箱</span></button>
+        <button onClick={() => setInstallOpen(true)}><Download size={19} /><span>安装与说明</span></button>
+      </nav>
+
       {selected ? (
         <main className="editor">
           <section className="editor-head">

@@ -28,6 +28,7 @@ button { color: inherit; }
 .topbar-actions { display: flex; align-items: center; gap: 9px; }
 .install-button { height: 36px; padding: 0 12px; border: 1px solid #d3d8d3; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.7); cursor: pointer; font-size: 12px; font-weight: 600; }
 .install-button:hover { background: white; }
+.mobile-actions { display: none; }
 
 .library, .editor { max-width: 1240px; margin: 0 auto; padding: 50px 24px 80px; }
 .library-head { display: flex; justify-content: space-between; align-items: end; gap: 40px; padding: 34px 0 58px; }
@@ -121,8 +122,11 @@ button { color: inherit; }
 .quality-note { margin: 0 24px 24px; padding: 14px 16px; border-radius: 12px; color: #675b3b; background: #f7ecd2; font-size: 11px; line-height: 1.65; }
 
 @media (max-width: 760px) {
-  .topbar { height: 64px; padding: 0 16px; }.privacy-chip { display: none; }.install-button { width: 38px; padding: 0; justify-content: center; font-size: 0; }.tools-button { color: white; background: var(--ink); border-color: var(--ink); }
-  .library, .editor { padding: 24px 14px 100px; }
+  .topbar { height: 64px; padding: 0 16px; }.topbar-actions { display: none; }
+  .mobile-actions { min-height: 64px; padding: 8px 12px max(8px, env(safe-area-inset-bottom)); position: fixed; right: 10px; bottom: 8px; left: 10px; z-index: 50; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border: 1px solid rgba(20,32,24,.13); border-radius: 18px; background: rgba(251,250,246,.92); box-shadow: 0 12px 36px rgba(20,32,24,.2); backdrop-filter: blur(18px); }
+  .mobile-actions button { min-height: 46px; border: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #e4ede7; color: var(--green); font-size: 12px; font-weight: 700; }
+  .mobile-actions button:last-child { color: white; background: var(--ink); }
+  .library, .editor { padding: 24px 14px 130px; }
   .library-head { padding: 24px 2px 38px; display: block; }.library h1 { font-size: 40px; }.new-actions { margin-top: 24px; }.new-actions button { flex: 1; }.new-actions .toolbox-entry { min-width: 100%; border-color: #9bb9a5; color: var(--green); background: var(--green-soft); }
   .section-line { align-items: stretch; flex-direction: column; }.search { width: 100%; }
   .document-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }.document-cover { height: 210px; }
