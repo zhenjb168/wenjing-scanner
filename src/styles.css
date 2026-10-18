@@ -34,7 +34,7 @@ button { color: inherit; }
 .eyebrow { margin: 0 0 10px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .18em; }
 .library h1 { max-width: 700px; margin: 0; font-family: 'Iowan Old Style', 'Songti SC', serif; font-size: clamp(40px, 5vw, 68px); font-weight: 400; line-height: 1.08; letter-spacing: -.025em; }
 .library-head > div > p:last-child { color: var(--muted); font-size: 16px; }
-.new-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.new-actions { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
 .primary, .secondary { border: 0; border-radius: 13px; padding: 13px 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; cursor: pointer; transition: .2s ease; }
 .primary { background: var(--ink); color: white; box-shadow: 0 8px 18px rgba(20,32,24,.17); }
 .primary:hover { background: #27452f; transform: translateY(-1px); }
@@ -121,9 +121,9 @@ button { color: inherit; }
 .quality-note { margin: 0 24px 24px; padding: 14px 16px; border-radius: 12px; color: #675b3b; background: #f7ecd2; font-size: 11px; line-height: 1.65; }
 
 @media (max-width: 760px) {
-  .topbar { height: 64px; padding: 0 16px; }.privacy-chip { display: none; }.install-button { width: 38px; padding: 0; justify-content: center; font-size: 0; }
+  .topbar { height: 64px; padding: 0 16px; }.privacy-chip { display: none; }.install-button { width: 38px; padding: 0; justify-content: center; font-size: 0; }.tools-button { color: white; background: var(--ink); border-color: var(--ink); }
   .library, .editor { padding: 24px 14px 100px; }
-  .library-head { padding: 24px 2px 38px; display: block; }.library h1 { font-size: 40px; }.new-actions { margin-top: 24px; }.new-actions button { flex: 1; }
+  .library-head { padding: 24px 2px 38px; display: block; }.library h1 { font-size: 40px; }.new-actions { margin-top: 24px; }.new-actions button { flex: 1; }.new-actions .toolbox-entry { min-width: 100%; border-color: #9bb9a5; color: var(--green); background: var(--green-soft); }
   .section-line { align-items: stretch; flex-direction: column; }.search { width: 100%; }
   .document-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }.document-cover { height: 210px; }
   .editor-head { grid-template-columns: auto minmax(0,1fr) auto; }.editor-head .primary { width: 44px; font-size: 0; padding: 0; height: 44px; }

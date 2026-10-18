@@ -222,7 +222,7 @@ export default function App() {
           <span><b>文镜</b><small>本地智能扫描</small></span>
         </button>
         <div className="topbar-actions">
-          <button className="install-button" onClick={() => setToolsOpen(true)}><Wrench size={15} /> 文档工具箱</button>
+          <button className="install-button tools-button" title="文档工具箱" aria-label="打开文档工具箱" onClick={() => setToolsOpen(true)}><Wrench size={15} /> 文档工具箱</button>
           <button className="install-button" onClick={() => setInstallOpen(true)}><Download size={15} /> 安装到设备</button>
           <div className="privacy-chip"><span /> 仅存此设备</div>
         </div>
@@ -290,6 +290,7 @@ export default function App() {
             <div className="new-actions">
               <button className="primary" onClick={() => cameraInput.current?.click()}><Camera /> 拍照扫描</button>
               <button className="secondary" onClick={() => libraryInput.current?.click()}><ImagePlus /> 导入图片</button>
+              <button className="secondary toolbox-entry" onClick={() => setToolsOpen(true)}><Wrench /> 文档工具箱</button>
             </div>
           </section>
 
